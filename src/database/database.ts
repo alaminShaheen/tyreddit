@@ -8,7 +8,10 @@ export class Database {
 
 	public async init() {
 		try {
-			this.ormInstance = await MikroORM.init<PostgreSqlDriver>(mikroOrmConfig, true);
+			this.ormInstance = await MikroORM.init<PostgreSqlDriver>(
+				mikroOrmConfig,
+				true,
+			);
 			await this.ormInstance.getMigrator().up();
 		} catch (error) {
 			console.log(error);
