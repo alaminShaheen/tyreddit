@@ -8,4 +8,6 @@ export const DatabaseConstants = {
 	DB_USER: process.env.DB_USER,
 	DB_PASSWORD: process.env.DB_PASSWORD,
 	DB_PORT: process.env.DB_PORT,
+	REDIS_PORT: process.env.REDIS_PORT,
+	REDIS_HOST: process.env.REDIS_HOST,
 };

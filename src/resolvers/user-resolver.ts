@@ -1,5 +1,5 @@
 import argon2 from "argon2";
-import { Arg, Ctx, Mutation } from "type-graphql";
+import { Arg, Ctx, Mutation, Query } from "type-graphql";
 import { AuthenticationConstants } from "../constants/authentication-constants";
 import { LoginRequestDto } from "../dtos/request/login-request-dto";
 import { RegisterRequestDto } from "../dtos/request/register-request-dto";
@@ -14,26 +14,26 @@ export class UserResolver {
 		@Ctx() context: Context,
 	): Promise<UserResponseDto> {
 		try {
-			const { entityManager } = context;
+			const { entityManager, request } = context;
 			const { username, password } = body;
-
-			if (username.length < AuthenticationConstants.usernameMinLength) {
+			
+			if (username.length < AuthenticationConstants.USERNAME_MIN_LENGTH) {
 				return {
 					errors: [
 						{
 							field: "username",
-							message: `Username cannot be less than ${AuthenticationConstants.usernameMinLength}`,
+							message: `Username cannot be less than ${AuthenticationConstants.USERNAME_MIN_LENGTH}`,
 						},
 					],
 				};
 			} else if (
-				password.length < AuthenticationConstants.passwordMinlength
+				password.length < AuthenticationConstants.PASSWORD_MIN_LENGTH
 			) {
 				return {
 					errors: [
 						{
 							field: "password",
-							message: `Password cannot be less than ${AuthenticationConstants.passwordMinlength}`,
+							message: `Password cannot be less than ${AuthenticationConstants.PASSWORD_MIN_LENGTH}`,
 						},
 					],
 				};
@@ -58,8 +58,9 @@ export class UserResolver {
 				username,
 				password: hashedPassword,
 			});
-
+			
 			await entityManager.persistAndFlush(user);
+			request.session.userId = user.id;
 
 			return {
 				user,
@@ -84,7 +85,7 @@ export class UserResolver {
 		@Ctx() context: Context,
 	): Promise<UserResponseDto> {
 		try {
-			const { entityManager } = context;
+			const { entityManager, request } = context;
 			const { username, password } = body;
 
 			const user = await entityManager.findOne(User, { username });
@@ -112,11 +113,59 @@ export class UserResolver {
 					],
 				};
 			}
-
+			
+			request.session.userId = user.id;
+			
 			return { user };
 		} catch (error) {
 			console.log(error);
-
+			
+			return {
+				errors: [
+					{
+						field: "",
+						message: "Internal server error",
+					},
+				],
+			};
+		}
+	}
+	
+	@Query(() => UserResponseDto)
+	async whoAmI (@Ctx() context: Context): Promise<UserResponseDto> {
+		try {
+			const { entityManager, request } = context;
+			
+			if (!request.session.userId) {
+				return {
+					errors: [
+						{
+							field: "",
+							message: "User not logged in",
+						},
+					],
+				};
+			}
+			
+			const user = await entityManager.findOne(User, {
+				id: request.session.userId,
+			});
+			
+			if (!user) {
+				return {
+					errors: [
+						{
+							field: "",
+							message: "User credentials invalid",
+						},
+					],
+				};
+			}
+			
+			return { user };
+		} catch (error) {
+			console.log(error);
+			
 			return {
 				errors: [
 					{
