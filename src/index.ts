@@ -5,6 +5,7 @@ import { ApplicationConstants } from "./constants/application-constants";
 import { Database } from "./database/database";
 import { HelloResolver } from "./resolvers/hello-resolver";
 import { PostResolver } from "./resolvers/post-resolver";
+import { UserResolver } from "./resolvers/user-resolver";
 
 async function main() {
 	try {
@@ -15,7 +16,7 @@ async function main() {
 
 		const apolloServer = new ApolloServer({
 			schema: await buildSchema({
-				resolvers: [HelloResolver, PostResolver],
+				resolvers: [HelloResolver, PostResolver, UserResolver],
 				validate: false,
 			}),
 			context: () => ({ entityManager: databaseInstance.ormInstance.em }),
